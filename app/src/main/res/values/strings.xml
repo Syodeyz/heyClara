@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">HeyClara</string>
+    <string name="value">threshold</string>
+    <string name="trigger">hey clara</string>
+    <string name="sensibility">Sensibility</string>
+    <string name="drestart">drestart</string>
+    <string name="back">back</string>
+    <string name="preview">preview</string>
+    <string name="help_text">help_text</string>
+</resources>
