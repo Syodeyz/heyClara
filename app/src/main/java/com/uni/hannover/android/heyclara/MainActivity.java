@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speechRecognizer = SpeechRecognizerSetup.defaultSetup()
                     .setAcousticModel(new File(assetDir, "models/en-us-ptm"))
                     .setDictionary(new File(assetDir, "models/lm/words.dic"))
-                    .setKeywordThreshold(Float.valueOf("1.e-" + 2 * sensibility))
+                    .setKeywordThreshold(Float.parseFloat("1.e-" + 2 * sensibility))
                     .getRecognizer();
             speechRecognizer.addKeyphraseSearch(SEARCH_WORD, getString(R.string.trigger));
             speechRecognizer.addListener(this);

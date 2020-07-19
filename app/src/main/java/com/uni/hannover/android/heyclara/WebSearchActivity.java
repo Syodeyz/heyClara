@@ -134,7 +134,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         });
 
 
-
+        //help text provide information to user on how to use the web search and Spotify controls
         TextView helpText = findViewById(R.id.helpText);
         String text_english = "Say any query you want to search and it will search on web.\n" +
                 "Include  \"Open Spotify\" on your query to launch Spotify on background.\n" +
@@ -174,8 +174,6 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
             }
         });
 
-
-
         initializeDks(lang);
         back = findViewById(R.id.back);
         back.setOnClickListener(view -> {
@@ -209,7 +207,6 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
      */
     public void defineActivity(String query) throws InterruptedException {
         dks.closeSpeechOperations();
-        //mTextField = findViewById(R.id.textView2);
         progressBar = findViewById(R.id.pbar);
         progressBar.setMax(7);
         int progress = 0;
@@ -317,6 +314,10 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
 
     }
 
+    /**
+     * initializes dks continuous recognition and delivers the recorded speech to perform action
+     * @param lang takes language as parameter to set default language
+     */
     public void initializeDks(String lang){
         //initializing dks for recording purpose
         dks = new Dks(getApplication(), getSupportFragmentManager(), new DksListener() {
@@ -398,6 +399,9 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         });
     }
 
+    /*
+    *initializes talk to speech and greets according to the language choosen
+    */
     public void initializeTts(){
 
         tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
@@ -431,6 +435,12 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         });
     }
 
+
+    /*
+    * to collect log_data for analysing purpose,
+    * should not be on production
+    * checks for storage permissions
+     */
     private void createFileOnDevice() throws IOException {
         /*
          * Function to initially create the log file and it also writes the time of creation to file.
@@ -453,17 +463,16 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
             System.out.println("********************not availabe");
         }
 
-
-
         String FILENAME = "log.txt";
         File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         myFile = new File(folder, FILENAME);
-
-
-
-
     }
 
+    /*
+     * to collect log_data for analysing purpose,
+     * should not be on production
+     * writes all the queries performed and cancelled in a file log.txt created above
+     */
     public void writeToFile(String message, String tag) throws IOException {
         fstream = new FileOutputStream(myFile, true);
         Date date = new Date();
