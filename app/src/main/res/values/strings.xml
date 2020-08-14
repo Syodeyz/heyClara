@@ -8,4 +8,5 @@
     <string name="preview">preview</string>
     <string name="help_text">help_text</string>
     <string name="command_preview">preview</string>
+    <string name="welcome">wake_word</string>
 </resources>

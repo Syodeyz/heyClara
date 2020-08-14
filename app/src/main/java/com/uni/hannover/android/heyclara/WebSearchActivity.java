@@ -37,9 +37,17 @@ import java.util.Objects;
 import github.com.vikramezhil.dks.speech.Dks;
 import github.com.vikramezhil.dks.speech.DksListener;
 
+/**
+ * The WebSearch activity is responsible for recording the speech.
+ * It uses DroidSpeech2.0 for continuous recognition.
+ * It uses text-to-speech for greetings.
+ * The recorded speech is then analysed and the content of the record will then determine the the intent
+ * to follow.
+ *
+ * @author Amrit Gaire
+ */
+
 public class WebSearchActivity extends AppCompatActivity implements TextToSpeech.OnInitListener{
-
-
     private static final String TAG = WebSearchActivity.class.getName();
     public static BufferedWriter out;
     private Dks dks;
@@ -47,9 +55,9 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
     private TextView textView;
     private ProgressBar progressBar;
     private String greet = "Yes please!, How can I help you?";
-    private String preview_english = "Please speak your query.\n \t \t \t I'm listening...";
+    private String preview_english = "Listening . . .";
     private String preview_deutsch = "Bitte stellen Sie Ihre Anfrage ein.\n \t \t \t Ich höre zu.... ";
-    private Button start;
+    private Button restart;
     private Button back;
     private Button showHelp;
     private String lang = "en";
@@ -59,6 +67,13 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
     private File myFile;
     private boolean helpClick = false;
 
+
+    /**
+     * The layout is set and Text to Speech is initialized. 
+     * The droid speech listener is also initialized here.
+     * Further, the preferences like language setting is stored.
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,9 +138,10 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
                 lang = "en";
             }
         });
-
-        start = findViewById(R.id.start);
-        start.setOnClickListener(new View.OnClickListener() {
+        
+        
+        restart = findViewById(R.id.start);
+        restart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onRestart();
@@ -156,7 +172,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
 
         }
 
-
+        //to toggle the hint button. 
         showHelp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -182,16 +198,20 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
     }
 
 
+    /**
+     * This method calls parent method on this state.
+     */
     @Override
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "On start");
-        //dks.injectProgressView(R.layout.layout_pv_inject);
-        dks.setOneStepResultVerify(true);
+        //dks.setOneStepResultVerify(true);
 
     }
 
-
+    /**
+     * This method is responsible for starting the recording process.
+     */
     @Override
     protected void onResume(){
         super.onResume();
@@ -200,49 +220,64 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         dks.startSpeechRecognition();
     }
 
-    /*
-     * activity logic implementation
-     * to diverse different activity according to the user query
-     *
+
+
+
+
+    /**
+     * This method checks the query for the different possible intent.
+     * Then calls the supportive functions to launch the intent accordingly.
+     * It is also responsible for presenting the regress meter and cancel option
+     * @param query the content of the query in String
+     * @throws InterruptedException
      */
-    public void defineActivity(String query) throws InterruptedException {
+    public void defineAction(String query) throws InterruptedException {
         dks.closeSpeechOperations();
         progressBar = findViewById(R.id.pbar);
         progressBar.setMax(7);
         int progress = 0;
 
+        /**
+         * This method is responsible for counting the duration presented to cancel the query.
+         */
         new CountDownTimer(5000, 1000) {
 
             @RequiresApi(api = Build.VERSION_CODES.N)
             @SuppressLint("SetTextI18n")
             public void onTick(long millisUntilFinished) {
                 progressBar.setVisibility(View.VISIBLE);
-                start.setVisibility(View.VISIBLE);
+                restart.setVisibility(View.VISIBLE);
                 if(dks.getCurrentSpeechLanguage().equals("de-DE")){
-                    start.setText("Abfrage Abbrechen");
+                    restart.setText("Abfrage Abbrechen");
                 }else{
-                    start.setText("Cancel Query");
+                    restart.setText("Cancel Query");
                 }
 
                 progressBar.setProgress((int) (progress + millisUntilFinished/1000), true);
                 if(clicked){
 
                     progressBar.setVisibility(View.GONE);
-                    start.setVisibility(View.GONE);
+                    restart.setVisibility(View.GONE);
                     return;
                 }
             }
 
+            /**
+             * The method will disable the cancel option and sets it invisible after the regression finishes.
+             * It will then call the helper method to launch the query if not canceled.
+             * It will also write to file if the query is canceled for analysis purpose.
+             */
             public void onFinish() {
                 progressBar.setVisibility(View.GONE);
-                start.setVisibility(View.GONE);
+                restart.setVisibility(View.GONE);
                 if(!clicked){
                     try {
-                        bePolite(query);
+                        decideIntent(query);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }else{
+                    //for analysis, should not be in production
                     try {
                         writeToFile(query, "Cancled ");
                     } catch (IOException e) {
@@ -256,14 +291,25 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
 
     }
 
-    public void bePolite(String query) throws InterruptedException {
+    /**
+     * This method is responsible for deciding the intent according the query passed.
+     * It checks for different possibilities and decides if the web search is done or Spotify should
+     * be launched.
+     * The recording is then closed as soon as the other intent is called.
+     * @param query The recorded speech is passed as string value for analysis.
+     * @throws InterruptedException
+     */
 
-        if(query.contains("open Spotify") || query.contains("öffne Spotify") || query.contains("Spotify öffnen")) {
+    public void decideIntent(String query) throws InterruptedException {
+
+        if(query.contains("Spotify") || query.contains("Spotify") || query.contains("Spotify")) {
+            dks.closeSpeechOperations();
             startActivity(new Intent(this, LaunchSpotify.class));
 
         }else{
 
             try {
+                dks.closeSpeechOperations();
                 Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
                 intent.putExtra(SearchManager.QUERY, query);
                 startActivity(intent);
@@ -273,13 +319,18 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         }
     }
 
-
+    /**
+     * This method calls its parent method on pause state.
+     */
     @Override
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "on Pause");
     }
 
+    /**
+     * This method is responsible for stopping the recognition as soon as the activity stops.
+     */
     @Override
     protected void onStop() {
         super.onStop();
@@ -287,6 +338,10 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         Log.i(TAG, "on Stop");
     }
 
+
+    /**
+     * This methods will also stops the recognition process if the activity is destroyed.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -295,6 +350,9 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         Log.i(TAG, "on destroy");
     }
 
+    /**
+     * This method checks if the droid speech recognition is initialized and set the language preferences.
+     */
     @Override
     protected void onRestart() {
         super.onRestart();
@@ -311,7 +369,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
 
     @Override
     public void onInit(int status) {
-
+        //just  overrides
     }
 
     /**
@@ -322,6 +380,12 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         //initializing dks for recording purpose
         dks = new Dks(getApplication(), getSupportFragmentManager(), new DksListener() {
 
+            /**
+             * This method will show the ~ ~ ~ in the support bar and gives feedback that
+             * the recognition has started.
+             * It will show the live speech recorded on the screen.
+             * @param liveSpeechResult the recorded speech in text form
+             */
             @Override
             public void onDksLiveSpeechResult(@NotNull String liveSpeechResult) {
                 System.out.println("dks is listening");
@@ -330,20 +394,29 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
                 }
                 Log.d(getPackageName(), "Speech result - " + liveSpeechResult);
                 String livePreview = "" + liveSpeechResult;
+                //to let the greet message display the first time
                 if(first_attempt){
                     textView.setText(livePreview);
                 }
             }
+
+            /**
+             * This method collects the final speech recorded and passes to the defineAction method
+             * for further processing
+             * @param speechResult
+             */
             @Override
             public void onDksFinalSpeechResult(@NotNull String speechResult) {
                 Log.d(getPackageName(), "Final Speech result - " + speechResult);
+                dks.closeSpeechOperations();
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setSubtitle("");
                 }
                 first_attempt = true;
                 String query = speechResult;
 
-                dks.closeSpeechOperations();//.....................testing
+                dks.closeSpeechOperations();
+                //to avoid listening to the own greetings
                 if (!speechResult.equals("") && !speechResult.contains("can I help") && !speechResult.contains("wie kann ich Ihnen") && !speechResult.contains("yes please")) {
                     textView.setText(speechResult);
                     try {
@@ -362,7 +435,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
                         }
                     } else {
                         try {
-                            defineActivity(query);
+                            defineAction(query);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -370,10 +443,18 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
                 }
             }
 
+
             @Override
             public void onDksLiveSpeechFrequency(float frequency) {
+                //frequency if needed
             }
 
+            /**
+             * This method gives a wide range of values for language option.
+             * The default value en-us is set if other options are not givne.
+             * @param defaultLanguage the language set as default
+             * @param supportedLanguages the language options
+             */
             @Override
             public void onDksLanguagesAvailable(@org.jetbrains.annotations.Nullable String defaultLanguage, @org.jetbrains.annotations.Nullable ArrayList<String> supportedLanguages) {
                 Log.d(getPackageName(), "defaultLanguage - " + defaultLanguage);
@@ -389,9 +470,13 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
                     }
                 }
 
-                System.out.println("The language is : " + dks.getCurrentSpeechLanguage());
+                //System.out.println("The language is : " + dks.getCurrentSpeechLanguage());
             }
 
+            /**
+             * Just to get notified if language options fails.
+             * @param errMsg
+             */
             @Override
             public void onDksSpeechError(@NotNull String errMsg) {
                 Toast.makeText(getApplication(), errMsg, Toast.LENGTH_SHORT).show();
@@ -399,9 +484,9 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         });
     }
 
-    /*
-    *initializes talk to speech and greets according to the language choosen
-    */
+    /**
+     * This method initializes the text to speech and greets either in german or in english.
+     */
     public void initializeTts(){
 
         tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
@@ -436,7 +521,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
     }
 
 
-    /*
+    /**
     * to collect log_data for analysing purpose,
     * should not be on production
     * checks for storage permissions
@@ -451,16 +536,16 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         if(Environment.MEDIA_MOUNTED.equals(state)){
             // Both Read and write operations available
             Available= true;
-            System.out.println("***********************read and write availabe");
+            //System.out.println("***********************read and write availabe");
         } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)){
             // Only Read operation available
             Available= true;
             Readable= true;
-            System.out.println("**********************read only availabe");
+           // System.out.println("**********************read only availabe");
         } else {
             // SD card not mounted
             Available = false;
-            System.out.println("********************not availabe");
+            //System.out.println("********************not availabe");
         }
 
         String FILENAME = "log.txt";
@@ -468,7 +553,7 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         myFile = new File(folder, FILENAME);
     }
 
-    /*
+    /**
      * to collect log_data for analysing purpose,
      * should not be on production
      * writes all the queries performed and cancelled in a file log.txt created above
@@ -479,7 +564,6 @@ public class WebSearchActivity extends AppCompatActivity implements TextToSpeech
         String log_message = tag + date.toString() + " : " + message + "\n";
         fstream.write(log_message.getBytes());
         fstream.close();
-        System.out.println("***************I came here*********");
     }
 
 }
