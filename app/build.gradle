@@ -45,4 +45,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.github.vikramezhil:DroidSpeech2.0:v1.2'
     implementation(name: 'pocketsphinx-android-5prealpha-release', ext: 'aar')
+    implementation(name: 'spotify-app-remote-release-0.7.0', ext: 'aar')
+    implementation "com.google.code.gson:gson:2.8.5"
 }
