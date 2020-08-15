@@ -1,8 +1,8 @@
 # heyClara
 Android App for easy websearch and basic spotify playback control with voice recognizer.
 
-Wake word:
-Say "Hey Clara" after running the app, will lead you to query scree.
+Wake word: "Hey, Clara"
+Say "Hey Clara" after running the app, and it will lead you to query screen.
 There you can search any thing but including "Open Spotify" will lauch Spotify.
 
 Playback controls:
